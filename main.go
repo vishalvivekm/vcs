@@ -15,7 +15,7 @@ func main() {
 
 	Args := os.Args
 	if len(os.Args) < 2 {
-		// print all the commands
+		// print help
 		fmt.Println(helptxt)
 		return
 	}
@@ -48,11 +48,11 @@ func main() {
 	switch Args[1] {
 	case "config":
 		if len(Args) < 3 { // .main config
-			// just read the vcs/confix.txt and print that
+			// just read the vcs/config.txt and print that
 
 			content := string(readFileContent("vcs/config.txt"))
 			if len(content) == 0 {
-				fmt.Println("Please, tell me who you are")
+				fmt.Println("Please, set a username")
 				return
 			}
 			fmt.Printf("The username is %s\n", content)
