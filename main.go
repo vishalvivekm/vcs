@@ -126,7 +126,10 @@ func main() {
 			fmt.Println("No commits made yet")
 			return
 		}
-		//content := readFileContent("vsc/log.txt")
+		file, err := os.Open("vcs/log.txt")
+		check(err)
+
+		fmt.Println(strings.Trim(string(readFileContent(file.Name())), "\n"))
 	case "commit": // ./main commit "msg" 0 1 2
 		author := readFileContent("vcs/config.txt")
 		if string(author) == "" {
@@ -176,8 +179,8 @@ func main() {
 		_, err = hash.Write([]byte(combinedHashOfFiles))
 		check(err)
 		commitHash := fmt.Sprintf("%x", hash.Sum(nil))
-		fmt.Println("Here is the hash of all the files combined: ")
-		fmt.Println(commitHash)
+		/*fmt.Println("Here is the hash of all the files combined: ")
+		fmt.Println(commitHash)*/
 		err = os.Mkdir(fmt.Sprintf("vcs/commits/%s", commitHash), os.ModePerm)
 		if err != nil {
 			if os.IsExist(err) {
