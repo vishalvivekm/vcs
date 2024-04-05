@@ -1,7 +1,12 @@
 package main
 
 import (
+	"bufio"
+	"crypto/sha256"
+	"errors"
 	"fmt"
+	"io"
+	"log"
 	"os"
 	"strings"
 )
@@ -116,11 +121,88 @@ func main() {
 			}
 
 		}
+	case "log":
+		_, err := os.Stat("vcs/log.txt")
+		if errors.Is(err, os.ErrNotExist) {
+			fmt.Println("No commits made yet")
+			return
+		}
+		//content := readFileContent("vsc/log.txt")
+	case "commit": // ./main commit "msg" 0 1 2
+		author := readFileContent("vcs/config.txt")
+		if string(author) == "" {
+			fmt.Println("Please configure Username first") // can prompt for help ? y or n : showHelp
+			return
+		}
+		content := string(readFileContent("vcs/index.txt"))
+		if len(content) == 0 {
+			fmt.Println("No tracked files, add a file to the index first")
+			return
+		}
+		if len(Args) < 3 {
+			fmt.Println("Please make sure to pass the commit msg")
+			return
+		}
+
+		cm := commitObject{
+			Author: string(author),
+			Msg:    Args[2],
+		}
+		content = string(readFileContent("vcs/index.txt"))
+		if len(content) == 0 {
+			fmt.Println("No tracked files, add a file to the index first")
+			return
+		}
+		err = os.MkdirAll("vcs/commits", os.ModePerm)
+		check(err)
+		var hashesOfFiles []string
+		// now read all the file being tracked, create their individual hashes, and hash the hashes and try to cretae a directory
+		// if errors.Is(err, os.IsExist) - no changes have been made,return
+		// copy the files to the /commits/newHash/
+		file, err := os.Open("vcs/index.txt")
+		check(err)
+		defer file.Close()
+		scanner := bufio.NewScanner(file)
+		for scanner.Scan() {
+			filebeingTracked := scanner.Text()
+			content := readFileContent(filebeingTracked)
+			hash := sha256.New()
+			_, err = hash.Write(content)
+			check(err)
+			fileHash := fmt.Sprintf("%x", hash.Sum(nil))
+			hashesOfFiles = append(hashesOfFiles, fileHash)
+		}
+		combinedHashOfFiles := strings.Join(hashesOfFiles, "")
+		hash := sha256.New()
+		_, err = hash.Write([]byte(combinedHashOfFiles))
+		check(err)
+		commitHash := fmt.Sprintf("%x", hash.Sum(nil))
+		fmt.Println("Here is the hash of all the files combined: ")
+		fmt.Println(commitHash)
+		err = os.Mkdir(fmt.Sprintf("vcs/commits/%s", commitHash), os.ModePerm)
+		if err != nil {
+			if os.IsExist(err) {
+				fmt.Println("No Files were changed")
+				return
+			}
+			fmt.Println("can not create dir: ")
+			log.Fatalln(err)
+		}
+		cm.Commit = commitHash
+		logMsg := fmt.Sprintf("commit %s\nAuthor: %s\n%s", cm.Commit, cm.Author, cm.Msg)
+		fmt.Println(logMsg)
+		file, err = os.OpenFile("vcs/log.txt", os.O_WRONLY|os.O_CREATE, os.ModePerm)
+
+		defer file.Close()
+		file.Seek(0, io.SeekStart)
+		fmt.Fprintln(file, logMsg)
+
 	default:
 		fmt.Printf("command: %s not supported yet\n\nAvailable:\n%s\n", Args[1], helptxt)
 	}
 
 }
+
 func readFileContent(name string) []byte {
 
 	data, err := os.ReadFile(name)
@@ -137,5 +219,11 @@ func readFileContent(name string) []byte {
 }
 
 var helptxt = `These are SVCS commands:
-config     Get and set a username.
-add        Add a file to the index.`
+config     Get and set a username
+add        Add a file to the index
+log        Show commit logs
+commit     Save changes`
+
+type commitObject struct {
+	Author, Commit, Msg string
+}
