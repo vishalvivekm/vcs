@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
-	"io"
 	"log"
 	"os"
 	"strings"
@@ -191,11 +190,14 @@ func main() {
 		cm.Commit = commitHash
 		logMsg := fmt.Sprintf("commit %s\nAuthor: %s\n%s", cm.Commit, cm.Author, cm.Msg)
 		fmt.Println(logMsg)
-		file, err = os.OpenFile("vcs/log.txt", os.O_WRONLY|os.O_CREATE, os.ModePerm)
-
+		file, err = os.OpenFile("vcs/log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
+		check(err)
 		defer file.Close()
-		file.Seek(0, io.SeekStart)
-		fmt.Fprintln(file, logMsg)
+		content = string(readFileContent(file.Name()))
+		err = os.WriteFile(file.Name(), []byte(logMsg), os.ModePerm)
+		check(err)
+		_, err = fmt.Fprint(file, "\n\n", content)
+		check(err)
 
 	default:
 		fmt.Printf("command: %s not supported yet\n\nAvailable:\n%s\n", Args[1], helptxt)
