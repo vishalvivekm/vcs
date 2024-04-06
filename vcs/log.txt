@@ -1,3 +1,8 @@
-commit be34b1276ca7b2c29ecd33712e7c1ed75b780a75a2fda70630a370ed1c82a7b5
-Author: Vivek
-initial commit
+commit 89306540f180a7504e567de8cec420909cfebaef2595c519518eb4254adaedf7
+Author: John
+modifive a.txt
+
+commit f996e1abcaf5e09a1144ba88df80ba21310fb60c99dbaf3a05b68a74be37d48d
+Author: John
+save a and test text files
+

@@ -271,30 +271,21 @@ func readIndex() {
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		singleFile := scanner.Text()
-		ch <- singleFile
+		if len(singleFile) != 0 {
+			ch <- singleFile
+		}
 	}
 	close(ch)
 }
 
 func readFilesAndCopy(commitHash string) {
-	defer wg.Done()
-	files, err := os.ReadDir(".")
-	if err != nil {
-		log.Fatalln(err)
-	}
-	fileToCopy := <-ch
-	for _, file := range files {
-		if file.Name() == fileToCopy {
-			
-			content, err := os.ReadFile(file.Name())
-			if err != nil {
-				log.Fatalln(err)
-			}
-			err = os.WriteFile(fmt.Sprintf("vcs/commits/%s/%s", commitHash, file.Name()), content, os.ModePerm)
-			if err != nil {
-				log.Fatalln(err)
-			}
-			fmt.Println(file.Name())
-		}
-	}
+    defer wg.Done()
+    for fileName := range ch {
+        content := readFileContent(fileName)
+        err := os.WriteFile(fmt.Sprintf("vcs/commits/%s/%s", commitHash, fileName), content, os.ModePerm)
+        if err != nil {
+            log.Fatalf("Error writing file %s to commit: %v", fileName, err)
+        }
+        fmt.Printf("Copied file:%s to the commit %s\n", fileName, commitHash)
+    }
 }
