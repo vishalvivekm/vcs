@@ -8,7 +8,11 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 )
+
+var ch = make(chan string)
+var wg sync.WaitGroup
 
 func check(e error) {
 	if e != nil {
@@ -16,7 +20,6 @@ func check(e error) {
 	}
 }
 func main() {
-
 	Args := os.Args
 	if len(os.Args) < 2 {
 		// print help
@@ -192,7 +195,9 @@ func main() {
 		}
 		cm.Commit = commitHash
 		logMsg := fmt.Sprintf("commit %s\nAuthor: %s\n%s", cm.Commit, cm.Author, cm.Msg)
-		fmt.Println(logMsg)
+		//fmt.Println(logMsg)
+
+		// write logs to log.txt
 		file, err = os.OpenFile("vcs/log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
 		check(err)
 		defer file.Close()
@@ -202,10 +207,33 @@ func main() {
 		_, err = fmt.Fprint(file, "\n\n", content)
 		check(err)
 
+		// copy files of current commit to vcs/commits/commitID
+
+		//file, err = os.Open("vcs/index.txt")
+		//if err != nil {
+		//	log.Fatalln(err)
+		//}
+		//defer file.Close()
+		//scanner = bufio.NewScanner(file)
+		//for scanner.Scan() {
+		//	if singleFile := scanner.Text(); len(singleFile) != 0 {
+		//		//command := fmt.Sprintf("cp %s", singleFile)
+		//		cmd := exec.Command("cp", singleFile, fmt.Sprintf("vcs/commits/%s", cm.Commit))
+		//		if err := cmd.Run(); err != nil {
+		//			log.Fatalf("can not copy files to commits: %s", err)
+		//		}
+		//	}
+		//
+		//}
+		wg.Add(2)
+		go readIndex() // // reads the file being tracked and sends filePaths to the channel
+		go readFilesAndCopy(cm.Commit)
+
 	default:
 		fmt.Printf("command: %s not supported yet\n\nAvailable:\n%s\n", Args[1], helptxt)
 	}
 
+	wg.Wait()
 }
 
 func readFileContent(name string) []byte {
@@ -231,4 +259,33 @@ commit     Save changes`
 
 type commitObject struct {
 	Author, Commit, Msg string
+}
+
+func readIndex() {
+	defer wg.Done()
+	file, err := os.Open("vcs/index.txt")
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		singleFile := scanner.Text()
+		if len(singleFile) != 0 {
+			ch <- singleFile
+		}
+	}
+	close(ch)
+}
+
+func readFilesAndCopy(commitHash string) {
+    defer wg.Done()
+    for fileName := range ch {
+        content := readFileContent(fileName)
+        err := os.WriteFile(fmt.Sprintf("vcs/commits/%s/%s", commitHash, fileName), content, os.ModePerm)
+        if err != nil {
+            log.Fatalf("Error writing file %s to commit: %v", fileName, err)
+        }
+        fmt.Printf("Copied file:%s to the commit %s\n", fileName, commitHash)
+    }
 }
