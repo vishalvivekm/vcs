@@ -1,8 +1,12 @@
-commit 89306540f180a7504e567de8cec420909cfebaef2595c519518eb4254adaedf7
-Author: John
-modifive a.txt
+commit 2c4b18bf42056b4ae3c15b3112f9b1e7b0ecf6a89f6732ef15718925340b711e
+Author: JOHN
+update a.txt
 
-commit f996e1abcaf5e09a1144ba88df80ba21310fb60c99dbaf3a05b68a74be37d48d
-Author: John
-save a and test text files
+commit d32e36292f800ab6e6684d3b4cf596fe6d826155a84823eddb02718449ae4df4
+Author: JOHN
+save test.txt
+
+commit be34b1276ca7b2c29ecd33712e7c1ed75b780a75a2fda70630a370ed1c82a7b5
+Author: JOHN
+save a.txt
 
