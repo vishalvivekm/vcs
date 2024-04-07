@@ -187,15 +187,15 @@ func main() {
 		// compare changes from previous commit
 
 		cm.Commit = commitHash
-		isIdSameAsPrevCommit := compareCommit(cm.Commit)
-		if isIdSameAsPrevCommit {
+		isHashSameAsPrevCommitId := compareCommit(cm.Commit)
+		if isHashSameAsPrevCommitId {
 			fmt.Println("No Files were changed")
 			return
 		}
 		err = os.Mkdir(fmt.Sprintf("vcs/commits/%s", cm.Commit), os.ModePerm)
 		if err != nil {
 			if os.IsExist(err) {
-				// do nothing: refer issue:
+				// do nothing: refer issue: https://github.com/vishalvivekm/vcs/issues/3
 				//
 			} else {
 				check(err)
