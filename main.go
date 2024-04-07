@@ -171,17 +171,21 @@ func main() {
 		for scanner.Scan() {
 			filebeingTracked := scanner.Text()
 			content := readFileContent(filebeingTracked)
-			hash := sha256.New()
-			_, err = hash.Write(content)
+			//hash := sha256.New()
+			//_, err = hash.Write(content)
+			//check(err)
+			//fileHash := fmt.Sprintf("%x", hash.Sum(nil))
+			fileHash, err := returnHash(content)
 			check(err)
-			fileHash := fmt.Sprintf("%x", hash.Sum(nil))
 			hashesOfFiles = append(hashesOfFiles, fileHash)
 		}
 		combinedHashOfFiles := strings.Join(hashesOfFiles, "")
-		hash := sha256.New()
-		_, err = hash.Write([]byte(combinedHashOfFiles))
+		//hash := sha256.New()
+		//_, err = hash.Write([]byte(combinedHashOfFiles))
+		//check(err)
+		//commitHash := fmt.Sprintf("%x", hash.Sum(nil))
+		commitHash, err := returnHash([]byte(combinedHashOfFiles))
 		check(err)
-		commitHash := fmt.Sprintf("%x", hash.Sum(nil))
 		/*fmt.Println("Here is the hash of all the files combined: ")
 		fmt.Println(commitHash)*/
 		// compare changes from previous commit
@@ -323,4 +327,13 @@ func compareCommit(commitID string) bool {
 
 	}
 	return false
+}
+func returnHash(content []byte) (string, error) {
+	hash := sha256.New()
+	_, err := hash.Write(content)
+	if err != nil {
+		return "", err
+	}
+	hashedString := fmt.Sprintf("%x", hash.Sum(nil))
+	return hashedString, nil
 }
