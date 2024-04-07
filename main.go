@@ -184,18 +184,24 @@ func main() {
 		commitHash := fmt.Sprintf("%x", hash.Sum(nil))
 		/*fmt.Println("Here is the hash of all the files combined: ")
 		fmt.Println(commitHash)*/
-		err = os.Mkdir(fmt.Sprintf("vcs/commits/%s", commitHash), os.ModePerm)
+		// compare changes from previous commit
+
+		cm.Commit = commitHash
+		isIdSameAsPrevCommit := compareCommit(cm.Commit)
+		if isIdSameAsPrevCommit {
+			fmt.Println("No Files were changed")
+			return
+		}
+		err = os.Mkdir(fmt.Sprintf("vcs/commits/%s", cm.Commit), os.ModePerm)
 		if err != nil {
 			if os.IsExist(err) {
-				fmt.Println("No Files were changed")
-				return
+				// do nothing: refer issue:
+				//
+			} else {
+				check(err)
 			}
-			fmt.Println("can not create dir: ")
-			log.Fatalln(err)
 		}
-		cm.Commit = commitHash
 		logMsg := fmt.Sprintf("commit %s\nAuthor: %s\n%s", cm.Commit, cm.Author, cm.Msg)
-		//fmt.Println(logMsg)
 
 		// write logs to log.txt
 		file, err = os.OpenFile("vcs/log.txt", os.O_WRONLY|os.O_CREATE|os.O_APPEND, os.ModePerm)
@@ -279,13 +285,42 @@ func readIndex() {
 }
 
 func readFilesAndCopy(commitHash string) {
-    defer wg.Done()
-    for fileName := range ch {
-        content := readFileContent(fileName)
-        err := os.WriteFile(fmt.Sprintf("vcs/commits/%s/%s", commitHash, fileName), content, os.ModePerm)
-        if err != nil {
-            log.Fatalf("Error writing file %s to commit: %v", fileName, err)
-        }
-        fmt.Printf("Copied file:%s to the commit %s\n", fileName, commitHash)
-    }
+	defer wg.Done()
+	for fileName := range ch {
+		content := readFileContent(fileName)
+		err := os.WriteFile(fmt.Sprintf("vcs/commits/%s/%s", commitHash, fileName), content, os.ModePerm)
+		if err != nil {
+			log.Fatalf("Error writing file %s to commit: %v", fileName, err)
+		}
+		fmt.Printf("Copied file:%s to the commit %s\n", fileName, commitHash)
+	}
+}
+func compareCommit(commitID string) bool {
+	// read first line of log.txt, get commit hash
+	// commitId == commitHash ? return true(no new changes from prev commit) : return false //
+
+	logfile, err := os.Open("vcs/log.txt")
+	if err != nil {
+		if os.IsNotExist(err) { // no commits to compare, return false
+			return false
+		} else {
+			check(err)
+		}
+	}
+	defer logfile.Close()
+	scanner := bufio.NewScanner(logfile)
+	line := 1
+	for scanner.Scan() {
+		if line == 2 {
+			break
+		}
+		preCommitID := strings.Split(scanner.Text(), " ")[1]
+		if preCommitID == commitID {
+			return true
+		} else {
+			line++
+		}
+
+	}
+	return false
 }
