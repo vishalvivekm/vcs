@@ -1,12 +1,5 @@
-commit 2c4b18bf42056b4ae3c15b3112f9b1e7b0ecf6a89f6732ef15718925340b711e
-Author: JOHN
-update a.txt
-
-commit d32e36292f800ab6e6684d3b4cf596fe6d826155a84823eddb02718449ae4df4
-Author: JOHN
-save test.txt
-
-commit be34b1276ca7b2c29ecd33712e7c1ed75b780a75a2fda70630a370ed1c82a7b5
-Author: JOHN
+commit b2ccd028d3a38661d960fcc9f4b966135e9863ff20be1c7e1aafeb86f0ae198c
+Author: john
 save a.txt
+Time: 2024-09-12 16:05:55
 
